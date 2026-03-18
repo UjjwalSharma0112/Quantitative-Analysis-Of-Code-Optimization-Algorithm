@@ -1,4 +1,6 @@
 # Clone the repo 
+install uv python package manager
+
 ## Run Command
 
 ```console
