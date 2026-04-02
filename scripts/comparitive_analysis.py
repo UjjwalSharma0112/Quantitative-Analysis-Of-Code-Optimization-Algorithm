@@ -50,12 +50,11 @@ def calculate_score(original_tac, optimized_tac, execution_time):
         "original_ops": orig_ops,
         "optimized_ops": opt_ops,
         "ops_reduction": ops_reduction,
-        "execution_time_ms": time_ms,
+        "execution_time_ms_optimisation": time_ms,
         "score": round(score, 2)
     }
 
 def analyze_algorithm(name, algo_func, tac):
-    # Pass a copy of TAC to avoid modifying the original list
     tac_copy = list(tac)
     
     start_time = time.perf_counter()
@@ -93,7 +92,6 @@ def analyze_combined(name, algorithms, tac):
     return score_data
 
 def main():
-    # Complex sample TAC designed to trigger multiple optimizations
     sample_tac = [
         ('t1', '10', '+', '20'),       # CF: t1 = 30
         ('t2', 'a', '*', 'b'),         
@@ -123,7 +121,6 @@ def main():
     for name, func in algorithms:
         results[name] = analyze_algorithm(name, func, sample_tac)
         
-    # Also evaluate a combined pipeline (typical compiler approach)
     # Order: Propagate -> Fold -> CSE -> DCE
     pipeline = [
         propogate_constants,
@@ -137,7 +134,6 @@ def main():
     print(" COMPARATIVE LEADERBOARD (SCORE BASED) ")
     print("="*60)
     
-    # Sort by score descending
     sorted_results = sorted(results.items(), key=lambda x: x[1]['score'], reverse=True)
     
     for rank, (name, data) in enumerate(sorted_results, 1):

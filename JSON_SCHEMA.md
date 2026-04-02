@@ -1,11 +1,16 @@
 post method
 /optimise
-
 {
-tac : {instr}
+"tac": [
+{ "result": "t1", "arg1": "5", "op": null, "arg2": null },
+{ "result": "t2", "arg1": "t1", "op": "+", "arg2": "3" },
+{ "result": "t3", "arg1": "t2", "op": "*", "arg2": "2" },
+{ "result": "t4", "arg1": "t3", "op": "-", "arg2": "t1" },
+{ "result": "t5", "arg1": "t4", "op": "+", "arg2": "10" }
+]
 }
 
-response
+/response
 {
 original_tac :{};
 optimised : {
