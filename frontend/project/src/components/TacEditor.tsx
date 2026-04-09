@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Play, Code, AlertCircle } from 'lucide-react';
-import { parseTacCode } from '../utils/tacParser';
+import { useState } from "react";
+import { Play, Code, AlertCircle } from "lucide-react";
+import { parseTacCode } from "../utils/tacParser";
 
 interface TacEditorProps {
   onOptimize: (tacCode: string) => void;
@@ -10,7 +10,7 @@ interface TacEditorProps {
 const defaultCode = `t1 = 5
 t2 = t1 + 3
 t3 = t2 * 2
-t4 = t3 - t1`;
+result = t3 - t1`;
 
 function TacEditor({ onOptimize, loading }: TacEditorProps) {
   const [tacCode, setTacCode] = useState(defaultCode);
@@ -23,7 +23,7 @@ function TacEditor({ onOptimize, loading }: TacEditorProps) {
       const jsonCode = JSON.stringify(instructions);
       onOptimize(jsonCode);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse TAC code');
+      setError(err instanceof Error ? err.message : "Failed to parse TAC code");
     }
   };
 

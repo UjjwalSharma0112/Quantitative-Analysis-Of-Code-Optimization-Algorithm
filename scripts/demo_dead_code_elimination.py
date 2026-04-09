@@ -7,7 +7,7 @@ tac = [
     ('t4', 't2', '+', '1'),     # used
     ('t5', 't3', '*', '2'),     # dead (depends on dead t3)
     ('t6', '100', '/', '5'),    # dead (never used)
-    ('result', 't4', '+', '0')  # final output
+    ('t7', 't4', '+', '0')  # final output
 ]
 
 

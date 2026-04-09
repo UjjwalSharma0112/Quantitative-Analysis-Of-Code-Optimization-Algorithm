@@ -9,3 +9,5 @@ dependencies = [
     "pytest>=9.0.2",
     "uvicorn>=0.42.0",
 ]
+[tool.setuptools]
+packages = ["compiler"]   

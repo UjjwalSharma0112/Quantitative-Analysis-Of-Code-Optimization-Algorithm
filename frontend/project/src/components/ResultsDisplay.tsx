@@ -1,6 +1,6 @@
-import { BarChart3, AlertCircle } from 'lucide-react';
-import AlgorithmCard from './AlgorithmCard';
-
+import { BarChart3, AlertCircle } from "lucide-react";
+import AlgorithmCard from "./AlgorithmCard";
+type TACInstruction = [string, string | null, string | null, string | null];
 interface OptimizationResult {
   original_tac: Array<[string, string, string | null, string | null]>;
   optimised_tac: {
@@ -13,6 +13,7 @@ interface OptimizationResult {
       ops_reduction: number;
       execution_time_ms_optimisation: number;
       score: number;
+      optimised: TACInstruction[];
     };
   };
 }
@@ -72,7 +73,7 @@ function ResultsDisplay({ result, loading, error }: ResultsDisplayProps) {
   }
 
   const sortedAlgorithms = Object.entries(result.optimised_tac).sort(
-    ([, a], [, b]) => b.score - a.score
+    ([, a], [, b]) => b.score - a.score,
   );
 
   return (

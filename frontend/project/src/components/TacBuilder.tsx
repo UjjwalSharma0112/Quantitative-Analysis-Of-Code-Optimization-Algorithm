@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Trash2, Copy } from 'lucide-react';
+import { useState } from "react";
+import { Plus, Trash2, Copy } from "lucide-react";
 
 export interface TacInstruction {
   result: string;
@@ -19,7 +19,7 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
   const addInstruction = () => {
     const newInstruction: TacInstruction = {
       result: `t${instructions.length + 1}`,
-      arg1: '',
+      arg1: "",
       op: null,
       arg2: null,
     };
@@ -27,7 +27,11 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
     setExpandedIndex(instructions.length);
   };
 
-  const updateInstruction = (index: number, field: keyof TacInstruction, value: any) => {
+  const updateInstruction = (
+    index: number,
+    field: keyof TacInstruction,
+    value: any,
+  ) => {
     const updated = [...instructions];
     updated[index] = { ...updated[index], [field]: value };
     onInstructionsChange(updated);
@@ -44,10 +48,10 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
 
   const loadExample = () => {
     const example: TacInstruction[] = [
-      { result: 't1', arg1: '5', op: null, arg2: null },
-      { result: 't2', arg1: 't1', op: '+', arg2: '3' },
-      { result: 't3', arg1: 't2', op: '*', arg2: '2' },
-      { result: 't4', arg1: 't3', op: '-', arg2: 't1' },
+      { result: "t1", arg1: "5", op: null, arg2: null },
+      { result: "t2", arg1: "t1", op: "+", arg2: "3" },
+      { result: "t3", arg1: "t2", op: "*", arg2: "2" },
+      { result: "result", arg1: "t3", op: "-", arg2: "t1" },
     ];
     onInstructionsChange(example);
   };
@@ -55,7 +59,9 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-900">TAC Instructions</h3>
+        <h3 className="text-sm font-semibold text-slate-900">
+          TAC Instructions
+        </h3>
         <div className="flex gap-2">
           <button
             onClick={copyToClipboard}
@@ -94,10 +100,12 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
                   <div className="flex-1">
                     <div className="text-sm font-medium text-slate-900">
                       {instruction.result} = {instruction.arg1}
-                      {instruction.op ? ` ${instruction.op} ${instruction.arg2}` : ''}
+                      {instruction.op
+                        ? ` ${instruction.op} ${instruction.arg2}`
+                        : ""}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {instruction.op ? 'Binary Operation' : 'Assignment'}
+                      {instruction.op ? "Binary Operation" : "Assignment"}
                     </div>
                   </div>
                 </div>
@@ -122,7 +130,7 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
                       type="text"
                       value={instruction.result}
                       onChange={(e) =>
-                        updateInstruction(index, 'result', e.target.value)
+                        updateInstruction(index, "result", e.target.value)
                       }
                       className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                       placeholder="t1"
@@ -137,7 +145,7 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
                       type="text"
                       value={instruction.arg1}
                       onChange={(e) =>
-                        updateInstruction(index, 'arg1', e.target.value)
+                        updateInstruction(index, "arg1", e.target.value)
                       }
                       className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                       placeholder="5 or t1"
@@ -149,13 +157,9 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
                       Operation (optional)
                     </label>
                     <select
-                      value={instruction.op || ''}
+                      value={instruction.op || ""}
                       onChange={(e) =>
-                        updateInstruction(
-                          index,
-                          'op',
-                          e.target.value || null
-                        )
+                        updateInstruction(index, "op", e.target.value || null)
                       }
                       className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     >
@@ -163,12 +167,12 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
                       <option value="+">+ (Addition)</option>
                       <option value="-">- (Subtraction)</option>
                       <option value="*">* (Multiplication)</option>
-                      <option value="/">/  (Division)</option>
+                      <option value="/">/ (Division)</option>
                       <option value="%">% (Modulo)</option>
                       <option value="==">== (Equality)</option>
                       <option value="!=">!= (Inequality)</option>
-                      <option value="<">{'<'} (Less Than)</option>
-                      <option value=">">{'>'} (Greater Than)</option>
+                      <option value="<">{"<"} (Less Than)</option>
+                      <option value=">">{">"} (Greater Than)</option>
                       <option value="<=">{`<= (Less or Equal)`}</option>
                       <option value=">=">{`>= (Greater or Equal)`}</option>
                     </select>
@@ -181,9 +185,9 @@ function TacBuilder({ instructions, onInstructionsChange }: TacBuilderProps) {
                       </label>
                       <input
                         type="text"
-                        value={instruction.arg2 || ''}
+                        value={instruction.arg2 || ""}
                         onChange={(e) =>
-                          updateInstruction(index, 'arg2', e.target.value)
+                          updateInstruction(index, "arg2", e.target.value)
                         }
                         className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                         placeholder="3 or t2"

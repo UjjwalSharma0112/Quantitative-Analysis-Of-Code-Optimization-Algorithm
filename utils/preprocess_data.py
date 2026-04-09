@@ -13,7 +13,7 @@ from compiler.dead_code_elimination import eliminate_dead_code
 
 @contextlib.contextmanager
 def suppress_stdout():
-    """Context manager to suppress print statements from the algorithms."""
+
     new_stdout = io.StringIO()
     old_stdout = sys.stdout
     sys.stdout = new_stdout
@@ -31,6 +31,7 @@ def analyze_algorithm(name, algo_func, tac):
         optimized_tac = algo_func(tac_copy)
     end_time = time.perf_counter()    
     score_data = calculate_score_tac(tac, optimized_tac, end_time - start_time)
+    score_data["optimised"] = optimized_tac 
     return score_data
 
 def analyze_combined(name, algorithms, tac):
@@ -43,6 +44,7 @@ def analyze_combined(name, algorithms, tac):
     end_time = time.perf_counter()
     
     score_data = calculate_score_tac(tac, tac_copy, end_time - start_time)
+    score_data["optimised"] = tac_copy
     return score_data
 
 

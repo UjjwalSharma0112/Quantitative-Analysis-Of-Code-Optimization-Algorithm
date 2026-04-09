@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Code2 } from 'lucide-react';
-import TacEditor from './components/TacEditor';
-import ResultsDisplay from './components/ResultsDisplay';
+import { useState } from "react";
+import { Code2 } from "lucide-react";
+import TacEditor from "./components/TacEditor";
+import ResultsDisplay from "./components/ResultsDisplay";
 
+type TACInstruction = [string, string | null, string | null, string | null];
 interface OptimizationResult {
   original_tac: Array<[string, string, string | null, string | null]>;
   optimised_tac: {
@@ -15,6 +16,7 @@ interface OptimizationResult {
       ops_reduction: number;
       execution_time_ms_optimisation: number;
       score: number;
+      optimised: TACInstruction[];
     };
   };
 }
@@ -31,22 +33,22 @@ function App() {
     try {
       const tacInstructions = JSON.parse(tacCode);
 
-      const response = await fetch('http://127.0.0.1:8000/optimise', {
-        method: 'POST',
+      const response = await fetch("http://127.0.0.1:8000/optimise", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ tac: tacInstructions }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to optimize code');
+        throw new Error("Failed to optimize code");
       }
 
       const data = await response.json();
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -62,11 +64,9 @@ function App() {
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-slate-900">
-                TAC Optimizer
+                Quantitative-Analysis-Of-Code-Optimization-Algorithm
               </h1>
-              <p className="text-sm text-slate-600">
-                Benchmark code optimization algorithms
-              </p>
+              <p className="text-sm text-slate-600">TAC Optimizer</p>
             </div>
           </div>
         </div>

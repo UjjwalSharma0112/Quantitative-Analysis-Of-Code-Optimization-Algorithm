@@ -1,4 +1,3 @@
-
 from utils import convert_to_tuples, preprocess
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,7 +26,7 @@ async def optimise(request: Request):
     data = await request.json()
     tac = convert_to_tuples(data["tac"])
     result = preprocess(tac)
-    print( result)
+   
     return  {
         "original_tac" : tac,
         "optimised_tac" : result

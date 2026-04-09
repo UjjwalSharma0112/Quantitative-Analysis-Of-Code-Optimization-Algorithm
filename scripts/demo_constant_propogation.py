@@ -2,11 +2,11 @@ from compiler.constant_propogation import propogate_constants
 
  
 tac = [
-    ('t1', '5', None, None),        # t1 = 5
-    ('t2', 't1', '+', '3'),       # t2 = t1 + 3
-    ('t3', 't2', '*', '2'),       # t3 = t2 * 2
-    ('t4', 't3', '-', 't1'),      # t4 = t3 - t1
-    ('t5', 't4', '+', '10'),      # t5 = t4 + 10
+    ('t1', '5', None, None),       
+    ('t2', 't1', '+', '3'),       
+    ('t3', 't2', '*', '2'),      
+    ('t4', 't3', '-', 't1'),      
+    ('t5', 't4', '+', '10'),      
 ]
 print("=== BEFORE CONSTANT PROPOGATION ===")
 
