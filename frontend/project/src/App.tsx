@@ -26,27 +26,43 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleOptimize = async (tacCode: string) => {
+  const handleOptimize = async (tacCode: string, toggle: boolean) => {
     setLoading(true);
     setError(null);
 
     try {
-      const tacInstructions = JSON.parse(tacCode);
+      if (toggle) {
+        const tacInstructions = JSON.parse(tacCode);
+        const response = await fetch("http://127.0.0.1:8000/optimise", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ tac: tacInstructions }),
+        });
 
-      const response = await fetch("http://127.0.0.1:8000/optimise", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ tac: tacInstructions }),
-      });
+        if (!response.ok) {
+          throw new Error("Failed to optimize code");
+        }
 
-      if (!response.ok) {
-        throw new Error("Failed to optimize code");
+        const data = await response.json();
+        setResult(data);
+      } else {
+        const response = await fetch("http://127.0.0.1:8000/optimise/ccode", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ tac: tacCode }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to optimize code");
+        }
+
+        const data = await response.json();
+        setResult(data);
       }
-
-      const data = await response.json();
-      setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

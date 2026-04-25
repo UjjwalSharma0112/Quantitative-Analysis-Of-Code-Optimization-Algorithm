@@ -7,9 +7,9 @@ export interface TacInstruction {
 
 export function parseTacCode(code: string): TacInstruction[] {
   const lines = code
-    .split('\n')
+    .split("\n")
     .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('//'));
+    .filter((line) => line && !line.startsWith("//"));
 
   const instructions: TacInstruction[] = [];
 
@@ -24,7 +24,7 @@ export function parseTacCode(code: string): TacInstruction[] {
 }
 
 function parseLine(line: string): TacInstruction | null {
-  const trimmed = line.replace(/;$/, '').trim();
+  const trimmed = line.replace(/;$/, "").trim();
   if (!trimmed) return null;
 
   const assignmentMatch = trimmed.match(/^(\w+)\s*=\s*(.+)$/);
@@ -35,7 +35,9 @@ function parseLine(line: string): TacInstruction | null {
   const result = assignmentMatch[1];
   const rhs = assignmentMatch[2].trim();
 
-  const binaryOpMatch = rhs.match(/^(.+?)\s*([\+\-\*/%]|==|!=|<=|>=|<|>)\s*(.+)$/);
+  const binaryOpMatch = rhs.match(
+    /^(.+?)\s*([\+\-\*/%]|==|!=|<=|>=|<|>)\s*(.+)$/,
+  );
 
   if (binaryOpMatch) {
     const arg1 = binaryOpMatch[1].trim();

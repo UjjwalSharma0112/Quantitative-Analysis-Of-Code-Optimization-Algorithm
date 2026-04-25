@@ -23,8 +23,18 @@ interface ResultsDisplayProps {
   loading: boolean;
   error: string | null;
 }
+function formatTAC(tac: TACInstruction[]) {
+  return tac.map(([res, arg1, op, arg2]) => {
+    if (!op) return `${res} = ${arg1}`;
+    return `${res} = ${arg1} ${op} ${arg2}`;
+  });
+}
+function ResultsDisplay({
+  result,
+  loading,
 
-function ResultsDisplay({ result, loading, error }: ResultsDisplayProps) {
+  error,
+}: ResultsDisplayProps) {
   if (loading) {
     return (
       <div className="flex flex-col h-[calc(100vh-180px)]">
@@ -94,6 +104,16 @@ function ResultsDisplay({ result, loading, error }: ResultsDisplayProps) {
           {sortedAlgorithms.map(([name, data]) => (
             <AlgorithmCard key={name} name={name} data={data} />
           ))}
+        </div>
+        <div>
+          <div className="mt-3 bg-white rounded-lg p-3 text-xs font-mono  text-slate-700 overflow-x-auto">
+            <h1>Orginal Code</h1>
+            {formatTAC(result.original_tac).map((line, idx) => (
+              <div key={idx} className="whitespace-pre">
+                {idx + 1}. {line}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

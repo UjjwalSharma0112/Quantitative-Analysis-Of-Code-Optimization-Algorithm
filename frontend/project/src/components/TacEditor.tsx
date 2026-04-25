@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Play, Code, AlertCircle } from "lucide-react";
+import { Play, AlertCircle } from "lucide-react";
 import { parseTacCode } from "../utils/tacParser";
 
 interface TacEditorProps {
-  onOptimize: (tacCode: string) => void;
+  onOptimize: (tacCode: string, toggle: boolean) => void;
   loading: boolean;
 }
 
@@ -15,13 +15,16 @@ result = t3 - t1`;
 function TacEditor({ onOptimize, loading }: TacEditorProps) {
   const [tacCode, setTacCode] = useState(defaultCode);
   const [error, setError] = useState<string | null>(null);
-
+  const [toggle, setToggle] = useState(true);
   const handleSubmit = () => {
     setError(null);
     try {
-      const instructions = parseTacCode(tacCode);
-      const jsonCode = JSON.stringify(instructions);
-      onOptimize(jsonCode);
+      if (toggle) {
+        const instructions = parseTacCode(tacCode);
+        onOptimize(JSON.stringify(instructions), toggle);
+      } else {
+        onOptimize(tacCode, toggle); // ✅ send raw code
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to parse TAC code");
     }
@@ -32,26 +35,48 @@ function TacEditor({ onOptimize, loading }: TacEditorProps) {
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col h-full">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <Code className="w-4 h-4 text-slate-600" />
-            <h2 className="text-sm font-medium text-slate-900">TAC Editor</h2>
+            <div className="flex items-center gap-3">
+              <span className={!toggle ? "font-semibold" : "opacity-50"}>
+                CODE
+              </span>
+
+              <div
+                onClick={() => setToggle((prev) => !prev)}
+                className={`w-16 h-8 flex items-center rounded-full p-1 cursor-pointer transition ${
+                  toggle ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <div
+                  className={`bg-white w-6 h-6 rounded-full shadow-md transform transition ${
+                    toggle ? "translate-x-8" : "translate-x-0"
+                  }`}
+                />
+              </div>
+
+              <span className={toggle ? "font-semibold" : "opacity-50"}>
+                TAC
+              </span>
+            </div>
           </div>
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Optimizing...
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4" />
-                Optimize
-              </>
-            )}
-          </button>
+          <div className="flex gap-8">
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Optimizing...
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" />
+                  Optimize
+                </>
+              )}
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-hidden flex flex-col">
           <textarea
