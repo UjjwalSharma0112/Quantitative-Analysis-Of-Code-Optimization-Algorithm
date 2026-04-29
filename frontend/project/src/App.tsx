@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { Code2 } from "lucide-react";
+import LandingPage from "./components/LandingPage";
 import TacEditor from "./components/TacEditor";
 import ResultsDisplay from "./components/ResultsDisplay";
 
+type Page = "landing" | "editor" | "results";
+type InputMode = "tac" | "ccode";
 type TACInstruction = [string, string | null, string | null, string | null];
+
 interface OptimizationResult {
   original_tac: Array<[string, string, string | null, string | null]>;
   optimised_tac: {
@@ -22,47 +25,41 @@ interface OptimizationResult {
 }
 
 function App() {
+  const [page, setPage] = useState<Page>("landing");
+  const [mode, setMode] = useState<InputMode>("tac");
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAlgos, setSelectedAlgos] = useState<string[]>([]);
 
-  const handleOptimize = async (tacCode: string, toggle: boolean) => {
+  const handleStart = (selectedMode: InputMode) => {
+    setMode(selectedMode);
+    setResult(null);
+    setError(null);
+    setPage("editor");
+  };
+
+  const handleOptimize = async (tacCode: string, toggle: boolean, algos: string[]) => {
+    setSelectedAlgos(algos);
     setLoading(true);
     setError(null);
+    setPage("results");
 
     try {
-      if (toggle) {
-        const tacInstructions = JSON.parse(tacCode);
-        const response = await fetch("http://127.0.0.1:8000/optimise", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ tac: tacInstructions }),
-        });
+      const endpoint = toggle
+        ? "http://127.0.0.1:8000/optimise"
+        : "http://127.0.0.1:8000/optimise/ccode";
 
-        if (!response.ok) {
-          throw new Error("Failed to optimize code");
-        }
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tac: toggle ? JSON.parse(tacCode) : tacCode }),
+      });
 
-        const data = await response.json();
-        setResult(data);
-      } else {
-        const response = await fetch("http://127.0.0.1:8000/optimise/ccode", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ tac: tacCode }),
-        });
+      if (!response.ok) throw new Error("Failed to optimize code");
 
-        if (!response.ok) {
-          throw new Error("Failed to optimize code");
-        }
-
-        const data = await response.json();
-        setResult(data);
-      }
+      const data = await response.json();
+      setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -71,29 +68,33 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Code2 className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-900">
-                Quantitative-Analysis-Of-Code-Optimization-Algorithm
-              </h1>
-              <p className="text-sm text-slate-600">TAC Optimizer</p>
-            </div>
-          </div>
+    <div className={`app page-${page}`}>
+      {page === "landing" && (
+        <div className="page-anim">
+          <LandingPage onStart={handleStart} />
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <TacEditor onOptimize={handleOptimize} loading={loading} />
-          <ResultsDisplay result={result} loading={loading} error={error} />
+      )}
+      {page === "editor" && (
+        <div className="page-anim">
+          <TacEditor
+            mode={mode}
+            onOptimize={handleOptimize}
+            loading={loading}
+            onBack={() => setPage("landing")}
+          />
         </div>
-      </main>
+      )}
+      {page === "results" && (
+        <div className="page-anim">
+          <ResultsDisplay
+            result={result}
+            loading={loading}
+            error={error}
+            selectedAlgos={selectedAlgos}
+            onBack={() => setPage("editor")}
+          />
+        </div>
+      )}
     </div>
   );
 }

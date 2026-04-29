@@ -1,105 +1,125 @@
 import { useState } from "react";
-import { Play, AlertCircle } from "lucide-react";
+import { Play, AlertCircle, ChevronLeft } from "lucide-react";
 import { parseTacCode } from "../utils/tacParser";
+import AlgorithmSelector from "./AlgorithmSelector";
+
+type InputMode = "tac" | "ccode";
 
 interface TacEditorProps {
-  onOptimize: (tacCode: string, toggle: boolean) => void;
+  mode: InputMode;
+  onOptimize: (tacCode: string, toggle: boolean, selectedAlgos: string[]) => void;
   loading: boolean;
+  onBack: () => void;
 }
 
-const defaultCode = `t1 = 5
+const DEFAULT_TAC = `t1 = 5
 t2 = t1 + 3
 t3 = t2 * 2
 result = t3 - t1`;
 
-function TacEditor({ onOptimize, loading }: TacEditorProps) {
-  const [tacCode, setTacCode] = useState(defaultCode);
+const DEFAULT_C = `int compute(int a, int b) {
+    int t1 = 5;
+    int t2 = t1 + 3;
+    int t3 = t2 * 2;
+    int result = t3 - t1;
+    return result;
+}`;
+
+const ALL_ALGOS = [
+  "Constant Folding",
+  "Dead Code Elimination",
+  "Constant Propagation",
+  "Common Subexpression Elim.",
+  "Combined Pipeline (All)",
+];
+
+function TacEditor({ mode, onOptimize, loading, onBack }: TacEditorProps) {
+  const isTac = mode === "tac";
+  const [code, setCode] = useState(isTac ? DEFAULT_TAC : DEFAULT_C);
   const [error, setError] = useState<string | null>(null);
-  const [toggle, setToggle] = useState(true);
+  const [selectedAlgos, setSelectedAlgos] = useState<string[]>(ALL_ALGOS);
+
   const handleSubmit = () => {
     setError(null);
     try {
-      if (toggle) {
-        const instructions = parseTacCode(tacCode);
-        onOptimize(JSON.stringify(instructions), toggle);
+      if (isTac) {
+        const instructions = parseTacCode(code);
+        onOptimize(JSON.stringify(instructions), true, selectedAlgos);
       } else {
-        onOptimize(tacCode, toggle); // ✅ send raw code
+        onOptimize(code, false, selectedAlgos);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to parse TAC code");
+      setError(err instanceof Error ? err.message : "Failed to parse code");
     }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-180px)]">
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col h-full">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-3">
-              <span className={!toggle ? "font-semibold" : "opacity-50"}>
-                CODE
-              </span>
-
-              <div
-                onClick={() => setToggle((prev) => !prev)}
-                className={`w-16 h-8 flex items-center rounded-full p-1 cursor-pointer transition ${
-                  toggle ? "bg-blue-600" : "bg-gray-300"
-                }`}
-              >
-                <div
-                  className={`bg-white w-6 h-6 rounded-full shadow-md transform transition ${
-                    toggle ? "translate-x-8" : "translate-x-0"
-                  }`}
-                />
-              </div>
-
-              <span className={toggle ? "font-semibold" : "opacity-50"}>
-                TAC
-              </span>
-            </div>
-          </div>
-          <div className="flex gap-8">
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Optimizing...
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4" />
-                  Optimize
-                </>
-              )}
-            </button>
-          </div>
+    <div className="editor-page">
+      <div className="editor-topbar">
+        <button className="back-btn" onClick={onBack}>
+          <ChevronLeft size={16} />
+          <span>Back</span>
+        </button>
+        <div className="editor-title-group">
+          <span className="editor-mode-badge">{isTac ? "TAC" : "C Code"}</span>
+          <h2 className="editor-title">Code Editor</h2>
         </div>
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <button
+          className="run-btn"
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <div className="spin" />
+              <span>Running...</span>
+            </>
+          ) : (
+            <>
+              <Play size={15} fill="currentColor" />
+              <span>Run</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="editor-body">
+        <div className="editor-pane">
+          <div className="editor-pane-header">
+            <span className="pane-label">
+              {isTac ? "Three-Address Code" : "C Function"}
+            </span>
+            <span className="pane-hint">
+              {isTac ? "Format: result = arg1 op arg2" : "Paste a single C function"}
+            </span>
+          </div>
           <textarea
-            value={tacCode}
-            onChange={(e) => {
-              setTacCode(e.target.value);
-              setError(null);
-            }}
-            className="flex-1 px-4 py-3 text-sm font-mono text-slate-900 resize-none focus:outline-none bg-slate-50"
-            placeholder="Enter TAC code here..."
+            className="code-area"
+            value={code}
+            onChange={(e) => { setCode(e.target.value); setError(null); }}
+            placeholder={isTac ? "Enter TAC code..." : "Enter C function..."}
             spellCheck={false}
           />
           {error && (
-            <div className="px-4 py-3 bg-red-50 border-t border-red-200 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-red-600">{error}</p>
+            <div className="editor-error">
+              <AlertCircle size={14} />
+              <span>{error}</span>
             </div>
           )}
         </div>
-        <div className="px-4 py-2 bg-slate-50 border-t border-slate-200">
-          <p className="text-xs text-slate-500">
-            Format: result = arg1 op arg2 (e.g., t1 = 5; t2 = t1 + 3)
-          </p>
+
+        <div className="sidebar">
+          <AlgorithmSelector selected={selectedAlgos} onChange={setSelectedAlgos} />
+
+          <div className="sidebar-info">
+            <h4 className="sidebar-info-title">How it works</h4>
+            <ol className="sidebar-steps">
+              <li>Paste your {isTac ? "TAC" : "C"} code on the left</li>
+              <li>Select which algorithms to run</li>
+              <li>Hit Run to analyze</li>
+              <li>View optimized output + charts</li>
+            </ol>
+          </div>
         </div>
       </div>
     </div>

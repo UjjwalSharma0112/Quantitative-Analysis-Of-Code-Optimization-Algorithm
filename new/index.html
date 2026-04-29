@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compiler Pipeline Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0c10;
+        --surface: #0f1218;
+        --card: #141820;
+        --border: #1e2530;
+        --accent: #00e5ff;
+        --accent2: #7c3aed;
+        --accent3: #f59e0b;
+        --text: #e2e8f0;
+        --muted: #64748b;
+        --glow: 0 0 40px rgba(0, 229, 255, 0.15);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Syne", sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* ── GRID NOISE BACKGROUND ── */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* ── HERO ── */
+      header {
+        position: relative;
+        z-index: 1;
+        padding: 80px 40px 60px;
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .eyebrow {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .eyebrow::before,
+      .eyebrow::after {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 1px;
+        background: var(--accent);
+        opacity: 0.5;
+      }
+
+      h1 {
+        font-size: clamp(2.4rem, 6vw, 5rem);
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 18px;
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--muted);
+        max-width: 540px;
+        margin: 0 auto 40px;
+        line-height: 1.7;
+        font-weight: 400;
+      }
+
+      /* Pipeline flow indicator */
+      .pipeline-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        flex-wrap: wrap;
+        margin-bottom: 48px;
+      }
+
+      .pipe-step {
+        background: var(--card);
+        border: 1px solid var(--border);
+        padding: 8px 18px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--text);
+        position: relative;
+        transition: all 0.2s;
+      }
+
+      .pipe-step:first-child {
+        border-radius: 6px 0 0 6px;
+      }
+      .pipe-step:last-child {
+        border-radius: 0 6px 6px 0;
+      }
+
+      .pipe-step.active-c {
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: 0 0 16px rgba(0, 229, 255, 0.2);
+      }
+      .pipe-step.active-tac {
+        border-color: var(--accent2);
+        color: var(--accent2);
+        box-shadow: 0 0 16px rgba(124, 58, 237, 0.2);
+      }
+      .pipe-step.active-ast {
+        border-color: var(--accent3);
+        color: var(--accent3);
+        box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+      }
+
+      .pipe-arrow {
+        display: flex;
+        align-items: center;
+        padding: 0 2px;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        height: 36px;
+        color: var(--muted);
+      }
+
+      .pipe-arrow svg {
+        width: 28px;
+        height: 16px;
+      }
+
+      /* ── TRY IT CTA ── */
+      .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--accent);
+        color: #0a0c10;
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 0.05em;
+        padding: 14px 32px;
+        border-radius: 6px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 0 30px rgba(0, 229, 255, 0.35);
+      }
+
+      .cta-btn:hover {
+        background: #fff;
+        box-shadow: 0 0 50px rgba(0, 229, 255, 0.5);
+        transform: translateY(-2px);
+      }
+
+      .cta-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* ── MAIN CONTENT ── */
+      main {
+        position: relative;
+        z-index: 1;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 72px 32px 100px;
+      }
+
+      .section {
+        margin-bottom: 90px;
+      }
+
+      .section-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+
+      .section-label.cyan {
+        color: var(--accent);
+      }
+      .section-label.purple {
+        color: var(--accent2);
+      }
+
+      .section h2 {
+        font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 16px;
+        line-height: 1.15;
+      }
+
+      .section p {
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.75;
+        max-width: 680px;
+        margin-bottom: 12px;
+        font-weight: 400;
+      }
+
+      /* Info chips */
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 20px 0 32px;
+      }
+
+      .chip {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        padding: 5px 12px;
+        border-radius: 4px;
+        border: 1px solid;
+      }
+
+      .chip.cyan {
+        border-color: rgba(0, 229, 255, 0.4);
+        color: var(--accent);
+        background: rgba(0, 229, 255, 0.05);
+      }
+      .chip.purple {
+        border-color: rgba(124, 58, 237, 0.4);
+        color: #a78bfa;
+        background: rgba(124, 58, 237, 0.05);
+      }
+      .chip.amber {
+        border-color: rgba(245, 158, 11, 0.4);
+        color: var(--accent3);
+        background: rgba(245, 158, 11, 0.05);
+      }
+
+      /* ── VIDEO CARD ── */
+      .video-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+        transition: border-color 0.3s;
+      }
+
+      .video-card.cyan-card:hover {
+        border-color: rgba(0, 229, 255, 0.3);
+      }
+      .video-card.purple-card:hover {
+        border-color: rgba(124, 58, 237, 0.3);
+      }
+
+      .video-card video {
+        width: 100%;
+        display: block;
+        background: #000;
+        max-height: 520px;
+        object-fit: contain;
+      }
+
+      .video-footer {
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid var(--border);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--muted);
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .vid-tag {
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: 100px;
+        font-weight: 700;
+      }
+
+      .vid-tag.cyan {
+        background: rgba(0, 229, 255, 0.1);
+        color: var(--accent);
+      }
+      .vid-tag.purple {
+        background: rgba(124, 58, 237, 0.1);
+        color: #a78bfa;
+      }
+
+      /* ── DIVIDER ── */
+      .divider {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 72px 0;
+        color: var(--muted);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+      }
+
+      .divider::before,
+      .divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      /* ── BOTTOM CTA STRIP ── */
+      .cta-strip {
+        position: relative;
+        z-index: 1;
+        background: var(--card);
+        border-top: 1px solid var(--border);
+        padding: 60px 32px;
+        text-align: center;
+      }
+
+      .cta-strip h3 {
+        font-size: clamp(1.4rem, 3vw, 2rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 12px;
+      }
+
+      .cta-strip p {
+        color: var(--muted);
+        margin-bottom: 32px;
+        font-weight: 400;
+      }
+
+      /* Scroll-in animation */
+      .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition:
+          opacity 0.6s ease,
+          transform 0.6s ease;
+      }
+
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Pulse dot */
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.4;
+          transform: scale(0.7);
+        }
+      }
+
+      .live-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: pulse-dot 1.4s ease-in-out infinite;
+        margin-right: 6px;
+      }
+
+      @media (max-width: 600px) {
+        header {
+          padding: 60px 20px 40px;
+        }
+        main {
+          padding: 48px 20px 72px;
+        }
+        .pipe-step {
+          padding: 6px 10px;
+          font-size: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── HEADER ── -->
+    <header>
+      <div class="eyebrow">Compiler Design · PBL Project</div>
+      <h1>Compiler Pipeline<br />Visualizer</h1>
+      <p class="subtitle">
+        Watch how source C code transforms — step by step — into Three-Address
+        Code, then into an Abstract Syntax Tree and Parse Tree.
+      </p>
+
+      <!-- Pipeline indicator -->
+      <div class="pipeline-bar">
+        <div class="pipe-step active-c">C Source</div>
+        <div class="pipe-arrow">
+          <svg
+            viewBox="0 0 28 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <line
+              x1="0"
+              y1="8"
+              x2="20"
+              y2="8"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <polyline
+              points="14,3 21,8 14,13"
+              stroke="currentColor"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+        <div class="pipe-step active-tac">TAC</div>
+        <div class="pipe-arrow">
+          <svg
+            viewBox="0 0 28 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <line
+              x1="0"
+              y1="8"
+              x2="20"
+              y2="8"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <polyline
+              points="14,3 21,8 14,13"
+              stroke="currentColor"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+        <div class="pipe-step active-ast">AST</div>
+        <div class="pipe-arrow">
+          <svg
+            viewBox="0 0 28 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <line
+              x1="0"
+              y1="8"
+              x2="20"
+              y2="8"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <polyline
+              points="14,3 21,8 14,13"
+              stroke="currentColor"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+        <div class="pipe-step active-ast">Parse Tree</div>
+      </div>
+
+      <a class="cta-btn" href="http://localhost:5173" target="_self">
+        <span class="live-dot"></span>
+        Try It Live
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </a>
+    </header>
+
+    <!-- ── MAIN ── -->
+    <main>
+      <!-- SECTION 1: C to TAC -->
+      <section class="section reveal">
+        <div class="section-label cyan">Phase 01 · Code Generation</div>
+        <h2>C Source → Three-Address Code</h2>
+        <p>
+          Three-Address Code (TAC) is an intermediate representation where each
+          instruction has at most one operator and three operands. It's the
+          bridge between high-level source code and machine-level operations.
+        </p>
+        <p>
+          The compiler parses your C input, resolves expressions, and emits
+          sequential TAC instructions — breaking complex expressions into atomic
+          steps, assigning temporaries, and linearising control flow (loops,
+          conditionals).
+        </p>
+
+        <div class="chips">
+          <span class="chip cyan">Lexical Analysis</span>
+          <span class="chip cyan">Syntax Parsing</span>
+          <span class="chip cyan">Temp Variables</span>
+          <span class="chip cyan">Control Flow Flattening</span>
+          <span class="chip amber">Constant Folding</span>
+          <span class="chip amber">Dead Code Elimination</span>
+        </div>
+
+        <div class="video-card cyan-card">
+          <video controls preload="metadata">
+            <source src="video1.mp4" type="video/mp4" />
+            Your browser does not support HTML5 video.
+          </video>
+          <div class="video-footer">
+            <span><span class="vid-tag cyan">TAC Generation</span></span>
+            <span>C Source &nbsp;→&nbsp; Intermediate Representation</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider">optimizations applied</div>
+
+      <!-- SECTION 2: TAC to AST/Parse Tree -->
+      <section class="section reveal">
+        <div class="section-label purple">Phase 02 · Tree Construction</div>
+        <h2>TAC → AST &amp; Parse Tree</h2>
+        <p>
+          The Abstract Syntax Tree (AST) captures the hierarchical semantic
+          structure of your program — stripping away syntactic noise like
+          parentheses and punctuation, retaining only what matters for code
+          generation and analysis.
+        </p>
+        <p>
+          The Parse Tree (Concrete Syntax Tree) is the full structural record of
+          every grammar rule applied during parsing. Together, they give you a
+          complete picture of how the compiler understood your code.
+        </p>
+
+        <div class="chips">
+          <span class="chip purple">Grammar Rules</span>
+          <span class="chip purple">Node Hierarchy</span>
+          <span class="chip purple">Semantic Nodes</span>
+          <span class="chip purple">Tree Traversal</span>
+          <span class="chip amber">Expression Trees</span>
+          <span class="chip amber">Scope Resolution</span>
+        </div>
+
+        <div class="video-card purple-card">
+          <video controls preload="metadata">
+            <source src="video2.mp4" type="video/mp4" />
+            Your browser does not support HTML5 video.
+          </video>
+          <div class="video-footer">
+            <span><span class="vid-tag purple">AST + Parse Tree</span></span>
+            <span
+              >Intermediate Representation &nbsp;→&nbsp; Tree Structures</span
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── BOTTOM CTA ── -->
+    <div class="cta-strip">
+      <h3>Explore it yourself</h3>
+      <p>
+        Enter your own C code and watch every compilation phase unfold in real
+        time.
+      </p>
+      <a class="cta-btn" href="http://localhost:5173" target="_self">
+        <span class="live-dot"></span>
+        Open Compiler Visualizer
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          style="width: 16px; height: 16px"
+        >
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+
+    <script>
+      // Scroll-reveal
+      const reveals = document.querySelectorAll(".reveal");
+      const io = new IntersectionObserver(
+        (entries) =>
+          entries.forEach((e) => {
+            if (e.isIntersecting) e.target.classList.add("visible");
+          }),
+        { threshold: 0.12 },
+      );
+      reveals.forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>
